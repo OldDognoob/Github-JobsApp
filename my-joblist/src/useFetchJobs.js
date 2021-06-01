@@ -1,11 +1,16 @@
 //useReducer handles all the different states inside in our useFetchJobs
-import {useReducer} from "react";
+import {useReducer, useEffect} from "react";
+import axios from 'axios';
 
 const ACTIONS = {
     MAKE_REQUEST: 'make-request',
     GET_DATA:'get-data',
     ERROR:'error'
 }
+
+//create a single variable for the base url
+const BASE_URL = 'https://cors-anywhere.herokuapp.com/https://jobs.github.com/positions.json'
+
 
 // the reducer function will be called every time we called dispatch
 // and dispatch whatever we passed on its goes to action
@@ -35,10 +40,40 @@ export default function useFetchJobs(params, page){
     // the initial state will be an object with jobs loading to true.
     const[state, dispatch] = useReducer(reducer, {jobs:[], loading: true})
 
+    useEffect(()=>{
+        // because I dont want to have different kind of axios "dancing" around 
+        // whenever I typing a new character, so when the params changes we want ot cancel the old request
+        // we create then a cancelToken
+        const cancelToken1 = axios.CancelToken.source()
+        dispatch({type:ACTIONS.MAKE_REQUEST})
+        axios.get(BASE_URL, {
+            cancelToken:cancelToken1.token,
+            params: {markdown: true, page: page, ...params}
+        }).then(res=>{
+            dispatch({type: ACTIONS.GET_DATA, payload:{jobs:res.data}})
+        }).catch(e=>{
+            dispatch({type: ACTIONS.ERROR, payload: {error:e}})
+        })
 
-    return {
-        jobs:[],
-        loading: false,
-        error:false
-    }
+        const cancelToken2 = axios.CancelToken.source()
+        axios.get(BASE_URL, {
+            cancelToken: cancelToken2.token,
+            params: {markdown: true, page: page + 1, ...params}
+        }).then(res=>{
+            dispatch({type:ACTIONS.UPDATE_HAS_NEXT_PAGE, payload: {hasNextPage: res.data.length !== 0}})
+        }).catch(e=>{
+            if(axios.isCancel(e)) return
+            dispatch({type:ACTIONS.ERROR, payload:{error:e}})
+        })
+
+        return () => {
+            cancelToken1.cancel()
+            cancelToken2.cancel()
+        }
+    }, [params, page])
+    
+
+    return state
 }
+//  we have 50 different hings been returned, because the API is paginated and only 
+//  returns 50 results per time inside our job portion which is our state
