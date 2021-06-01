@@ -1,12 +1,12 @@
-import React, {useState} from "react";
-import { Card, Badge, Button, Collapse } from "react-bootstrap";
-import ReactMarkdown from 'react-markdown';
+import React, { useState } from 'react'
+import { Card, Badge, Button, Collapse } from 'react-bootstrap'
+import ReactMarkdown from 'react-markdown'
 
-export default function Job({job}){
-    const [open, setOpen] = useState(false)
+export default function Job({ job }) {
+  const [open, setOpen] = useState(false)
 
-    return (
-        <Card className="mb-3">
+  return (
+    <Card className="mb-3">
       <Card.Body>
         <div className="d-flex justify-content-between">
           <div>
@@ -39,5 +39,5 @@ export default function Job({job}){
         </Collapse>
       </Card.Body>
     </Card>
-    )
+  )
 }
